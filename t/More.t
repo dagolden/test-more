@@ -8,7 +8,7 @@ BEGIN {
 }
 
 use lib 't/lib';
-use Test::More tests => 54;
+use Test::More tests => 58;
 
 # Make sure we don't mess with $@ or $!.  Test at bottom.
 my $Err   = "this should not be touched";
@@ -37,6 +37,16 @@ unlike("/var/local/pr0n/", '/^\/usr\/local/','regexes with slashes in unlike' );
 
 my @foo = qw(foo bar baz);
 unlike(@foo, '/foo/');
+
+path_is( '\local\pr0n', '/local/pr0n', 'path_is: \ in $got');
+path_is( '/local/pr0n', '\local\pr0n', 'path_is: \ in $expected');
+
+# testing path_isnt would require a Test::Builder::Tester approach
+# to confirm that tests fail, but it's trivially similar to path_is
+# so I haven't written tests for it -- dagolden, 2010-04-22
+
+path_like( '\local\pr0n', qr{/local/pr0n}, 'path_like: \ in $got');
+path_unlike( '\local\pr0n', qr{local\\pr0n}, 'path_unlike: \ in $got');
 
 can_ok('Test::More', qw(require_ok use_ok ok is isnt like skip can_ok
                         pass fail eq_array eq_hash eq_set));

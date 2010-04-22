@@ -25,6 +25,7 @@ our @ISA    = qw(Test::Builder::Module);
 our @EXPORT = qw(ok use_ok require_ok
   is isnt like unlike is_deeply
   cmp_ok
+  path_is path_isnt path_like path_unlike
   skip todo todo_skip
   pass fail
   eq_array eq_hash eq_set
@@ -67,6 +68,9 @@ Test::More - yet another framework for writing test scripts
   cmp_ok($got, '==', $expected, $test_name);
 
   is_deeply($got_complex_structure, $expected_complex_structure, $test_name);
+
+  path_is  ( $got, 'expected/path',   $test_name);
+  path_like( $got, qr{expected/path}, $test_name);
 
   SKIP: {
       skip $why, $how_many unless $have_some_feature;
@@ -474,6 +478,58 @@ sub cmp_ok($$$;$) {
     my $tb = Test::More->builder;
 
     return $tb->cmp_ok(@_);
+}
+
+=item B<path_is>
+
+=item B<path_isnt>
+
+=item B<path_like>
+
+=item B<path_unlike>
+
+  path_is  ( $got, "/expected/path",  $test_name );
+  path_like( $got, qr{expected/path}, $test_name );
+
+Comparing file paths requires extra care to ensure portability because
+Microsoft Windows uses backslashes as the native path separator.  Using
+C<is()> for tests often results in failures like C<got 'foo\bar',
+expected 'foo/bar'>.
+
+These four C<path_*> functions work just like C<is>, C<isnt>, C<like>
+and C<unlike>, except that back slashes are converted to forward slashes
+before comparison.  Regular expressions in C<path_like> and C<path_unlike>
+are not modified, however, so use appropriately-escaped forward slashes for
+file path regular expressions.
+
+=cut
+
+sub path_is ($$;$) {
+    my @args = @_;
+    my $tb = Test::More->builder;
+    s{\\}{/}g for @args[0,1];
+    return $tb->is_eq(@args);
+}
+
+sub path_isnt ($$;$) {
+    my @args = @_;
+    my $tb = Test::More->builder;
+    s{\\}{/}g for @args[0,1];
+    return $tb->isnt_eq(@args);
+}
+
+sub path_like ($$;$) {
+    my @args = @_;
+    my $tb = Test::More->builder;
+    $args[0] =~ s{\\}{/}g;
+    return $tb->like(@args);
+}
+
+sub path_unlike ($$;$) {
+    my @args = @_;
+    my $tb = Test::More->builder;
+    $args[0] =~ s{\\}{/}g;
+    return $tb->unlike(@args);
 }
 
 =item B<can_ok>
